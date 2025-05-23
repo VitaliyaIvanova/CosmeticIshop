@@ -1,0 +1,233 @@
+openapi: 3.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/none-d05/shopCosmetics/1.0.0
+info:
+  description: API for cosmetics eshop
+  version: "1.0.0"
+  title: API eshop
+  contact:
+    email: workivanovavv@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: user
+    description: Все Пользователи
+  - name: client
+    description: Клиент
+  - name: manager
+    description: Менеджер по продажам
+  - name: storekeeper
+    description: Кладовщик
+paths:
+  /products:
+    get:
+      tags:
+        - user
+      summary: Получить список продуктов
+      operationId: getProducts
+      description: Получить список продуктов в продуктовом каталоге
+      responses:
+        '200':
+          description: Получить список продуктов
+          content:
+            application/json:
+              schema:
+                type: array  
+                items:  
+                  $ref: '#/components/schemas/product'
+        '500':
+          description: Внутренняя ошибка сервера
+    
+    post:
+      tags:
+        - manager
+      summary: Добавление продукта
+      operationId: addProduct
+      security: 
+        - bearerAuth: []
+      description: Добавить продукт в продуктовый каталог
+      responses:
+        '201':
+          description: Продукт добавлен
+        '400':
+          description: Невалидные данные
+        '403':
+          description: Нет прав на создание продукта
+        '409':
+          description: Конфликт данных, такой товар уже существует
+        '500':
+          description: Внутренняя ошибка сервера
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/product'
+  /orders:
+    post:
+      tags:
+        - client
+      summary: Создать заказ
+      security: 
+        - bearerAuth: []
+      description: Создать заказ на сайте
+      responses:
+        '201':
+          description: Заказ создан
+        '401':
+          description: Требуется аутентификация
+        '500':
+          description: Внутренняя ошибка сервера
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/order'
+  /orders/{orderId}:
+    patch:
+      tags:
+        - manager
+      summary: Изменить статус заказа
+      security: 
+        - bearerAuth: []
+      description: Изменить статус заказа клиента
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+          description: Номер заказа, у которого необходимо изменить статус
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+      responses:
+        '200':
+          description: Статус успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/order'
+        '403':
+          description: Нет прав на изменение статуса заказа
+        '500':
+          description: Внутренняя ошибка сервера
+  /products/search:
+    get:
+      tags:
+        - user
+      summary: Найти продукт по названию/категории
+      description: Получить список продуктов в соответствии поиску
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+          description: Поисковая строка
+          example: "Шампунь"
+        - in: query
+          name: category
+          required: false
+          schema:
+            type: string
+          description: Фильтр по категории
+          example: "Крем для лица"
+      responses:
+        '200':
+          description: Получен список продуктов
+          content:
+            application/json:
+              schema:
+                type: array  
+                items:  
+                  $ref: '#/components/schemas/product'
+        '404':
+          description: Продукт не найден
+        '500':
+          description: Внутренняя ошибка сервера
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    product:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - price
+      properties:
+        id:
+          type: integer
+          description: Идентификатор продукта
+          format: uuid
+          example: 01
+        name:
+          type: string
+          description: Название продукта
+          example: "Белый лотос"
+        category:
+          type: string
+          description: Группа продукта
+          example: Гель для душа
+        price:
+          type: number
+          description: Цена продукта
+          format: decimal
+          example: 30.60
+          
+    order:
+      type: object
+      required:
+        - id
+        - clientId
+        - productId
+        - amountProductId
+        - discountSum
+        - totalSum
+        - status
+      properties:
+        id:
+          type: integer
+          description: Идентификатор заказа
+          format: uuid
+          example: 016
+        clientId:
+          type: integer
+          description: Идентификатор клиента
+          format: uuid
+          example: 25
+        productId:
+          type: integer
+          description: Идентификатор продукта
+          format: array
+          example: 099
+        amountProductId:
+          type: integer
+          description: количество определенного продукта в заказе
+          example: 2
+        discountSum:
+          type: number
+          format: decimal
+          description: Сумма скидки
+          example: 4.09
+        totalSum:
+          type: number
+          format: decimal
+          description: Сумма скидки
+          example: 26.00
+        status:
+          type: string
+          description: Статус заказа
+          example: Cancelled

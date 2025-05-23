@@ -1,0 +1,64 @@
+PlantUML code для диаграммы компонентов (уровень 3)
+@startuml 
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+!include <C4/C4_Component>
+
+title Интернет-магазин "Косметика". Уровень 3. Диаграмма компонентов
+
+
+Person(client, "Клиент", "Совершает онлайн покупки")
+Person(manager, "Менеджер", "Отслеживает заказы клиентов")
+Person(storekeeper, "Кладовщик", "Ведет учет товаров на складе")
+
+System_Boundary(shopSystem, "Интернет-магазин") {
+    Container(mobileApp, "Мобильное приложение", "React Native", "Интерфейс для просмотра каталога товаров, оформления и оплаты заказов")
+    Container(webApplication, "Веб-приложение", "Java/Spring MVC", "Интерфейс для просмотра каталога товаров, оформления и оплаты заказов, а также для отслеживания заказов и управления товарами на складе")
+    Container(backend, "Приложение бэкэнда", "Java/Microservices", " бизнес-логика"){
+        Component(apiGateway, "API gateway", "Spring Cloud Gateway", "Маршрутизация запросов")
+        Component(authService, "Сервис аутентификации/авторизации", "регистрация пользователей")
+        Component(productCatalogService, "Сервис продуктового каталога", "Управление продкаталогом")
+        Component(orderService, "Сервис заказов", "Управление заказами")
+        Component(paymentService, "Сервис оплат", "Отвечает за интеграцию с платежной системой")
+        Component(deliveryService, "Сервис доставки", "Отвечает за интеграцию со службой доставки")
+        Component(warehouseService, "Сервис управления складом", "Управление складским учетом")
+        
+        ContainerDb(dbAuthService, "База данных", "PostgreSQL", "Данные для авторизации, аутентификации пользователей")
+        ContainerDb(dbProductCatalogService, "База данных", "PostgreSQL", "Данные пр продуктовому каталогу")
+        ContainerDb(dbOrderService, "База данных", "PostgreSQL", "Данные по заказам")
+        ContainerDb(dbPaymentService, "База данных", "PostgreSQL", "Данные по оплатам")
+        ContainerDb(dbDeliveryService, "База данных", "PostgreSQL", "Данные по доставкам заказов")
+        ContainerDb(dbWarehouseService, "База данных", "PostgreSQL", "Данные по учету товаров на складе")
+    }
+}
+System_Ext(paymentGateWay, "WebPay", "Внешняя платежная система")
+System_Ext(deliveryGateWay, "СДЭК", "Служба доставки заказов")
+
+Rel(client, mobileApp, "JSON\nHTTPS")
+Rel(client, webApplication, "JSON\nHTTPS")
+Rel(manager, webApplication, "JSON\nHTTPS")
+Rel(storekeeper, webApplication, "JSON\nHTTPS")
+
+Rel(mobileApp, apiGateway, "Передает запросы [HTTPS/REST]")
+Rel(webApplication, apiGateway, "Передает запросы [HTTPS/REST]")
+Rel(apiGateway, authService, "Запрос на проверку  JWT-токена [REST API]")
+Rel(authService, apiGateway, "Передает токен [REST API]")
+Rel(apiGateway, productCatalogService, "[REST API]")
+Rel(apiGateway, orderService, "[REST API]")
+Rel(apiGateway, paymentService, "[REST API]")
+Rel(apiGateway, deliveryService, "[REST API]")
+Rel(apiGateway, warehouseService, "[REST API]")
+
+
+Rel(authService,dbAuthService, "SQL")
+Rel(productCatalogService,dbProductCatalogService, "SQL")
+Rel(orderService,dbOrderService, "SQL")
+Rel(paymentService,dbPaymentService, "SQL")
+Rel(deliveryService,dbDeliveryService, "SQL")
+Rel(warehouseService,dbWarehouseService, "SQL")
+
+Rel(paymentService, paymentGateWay, "Передает данные для обработки транзакций [SOAP/XML/HTTPS]")
+Rel(deliveryService, deliveryGateWay, "Передает данные о закаках для их доставки клиенту [JSON/HTTPS]")
+
+SHOW_FLOATING_LEGEND()
+@enduml
